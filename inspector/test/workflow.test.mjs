@@ -1,0 +1,18 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {inferInspectionPeriod,describeDataset,searchHandbook} from '../src/workflow.mjs';
+import {fixture} from './fixture.mjs';
+import {runInspection} from '../src/engine.mjs';
+const items=JSON.parse(fs.readFileSync(new URL('../data/handbook-items.json',import.meta.url)));
+const pages=JSON.parse(fs.readFileSync(new URL('../data/handbook-pages.json',import.meta.url)));
+test('inspection month auto-selected from dynamics1 without any user dates',()=>{const f=fixture();const r=inferInspectionPeriod(f.datasets);assert.equal(r.period,'202609');assert.equal(r.source,'DYNAMICS_LATEST');});
+test('older missing business does not shift global month',()=>{const f=fixture();f.datasets.dynamics.rows.push({...f.datasets.dynamics.rows[0],businessId:'OLDER',period:'202501'});assert.equal(inferInspectionPeriod(f.datasets).period,'202609');});
+test('period override only when explicitly supplied',()=>{const f=fixture();assert.equal(inferInspectionPeriod(f.datasets,'202608').period,'202608');assert.equal(inferInspectionPeriod({}).period,null);});
+test('dataset card reports row count and actual two month range',()=>{const f=fixture({months:2});const r=describeDataset(f.datasets.employment);assert.equal(r.months,2);assert.equal(r.first,'202608');assert.equal(r.last,'202609');});
+test('scope metadata is not mandatory when observed current survey data exists',()=>{const f=fixture();f.scope={};const o=runInspection(f);assert.equal(o.results.find(r=>r.ruleId==='R03'&&r.dimension==='forms').reasonCode,'SURVEY_DATA_PRESENT');});
+test('cutoff is optional and does not turn ordinary CASI state check off',()=>{const f=fixture();Object.assign(f.datasets.roster.rows[0],{casiState:'입력완료',responseState:4});const o=runInspection(f);assert.equal(o.results.find(r=>r.ruleId==='R02'&&r.dimension==='state').status,'REVIEW');assert.equal(o.results.find(r=>r.ruleId==='R02'&&r.dimension==='time').status,'NOT_RUN');});
+test('530 unique handbook items link to embedded source pages',()=>{assert.equal(items.length,530);assert.equal(new Set(items.map(r=>r.code)).size,530);for(const r of items){assert(r.name);assert(r.sourcePages.length);for(const p of r.sourcePages)assert(pages[r.volume+':'+p]);}});
+test('handbook searches code, name, terms, volume and uploaded codes',()=>{assert.equal(searchHandbook(items,{query:'P24121'})[0].name,'강관');assert(searchHandbook(items,{query:'강관'}).length>0);assert(searchHandbook(items,{query:'강관',volume:'2'}).every(r=>r.volume===2));assert.equal(searchHandbook(items,{codes:new Set(['P24121'])}).length,1);assert(searchHandbook(items,{query:'생산능력'}).length>0);});
+test('visually corrected special header names match the source',()=>{for(const [c,n]of [['P14101','남자용정장'],['P14102','여자용정장'],['P30101','자동차용내연기관'],['P34001','기계및장비수리']])assert.equal(items.find(r=>r.code===c).name,n);});
+test('all bundled source page assets exist and match their image formats',()=>{for(const v of Object.values(pages)){const local=new URL('../dist/'+v.asset,import.meta.url);const b=fs.readFileSync(fs.existsSync(local)?local:new URL('../../'+v.asset,import.meta.url));assert.equal(b.length,v.bytes);if(v.mime==='image/webp'){assert.equal(b.subarray(0,4).toString(),'RIFF');assert.equal(b.subarray(8,12).toString(),'WEBP');}else{assert.equal(b[0],255);assert.equal(b[1],216);assert.equal(b.at(-2),255);assert.equal(b.at(-1),217);}}});

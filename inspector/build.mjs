@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=path.dirname(fileURLToPath(import.meta.url));
+const read=n=>fs.readFileSync(path.join(root,n),'utf8');
+const strip=s=>s.replace(/^import .*?;\s*$/gm,'').replace(/\bexport (?=(?:const|let|class|function|async function)\b)/g,'');
+const core=['decimal','schema','workflow','catalog','reasons','analysis','engine','adapter','export'].map(n=>strip(read('src/'+n+'.mjs'))).join('\n');
+const bundle=read('vendor/xlsx.full.min.cjs')+'\n'+core+'\n'+strip(read('test/fixture.mjs'))+'\n'+read('labels.js')+'\nconst handbookItems='+read('data/handbook-items.json')+';\n'+read('src/app.js');
+fs.writeFileSync(path.join(root,'index.html'),read('template.html').replace('/*BUNDLE*/',()=>bundle.replace(/<\/script/gi,'<\\/script')));
+console.log('Built inspector/index.html');

@@ -1,0 +1,3 @@
+Loaded 광업제조업 내검 · 새 개발판 []
+Demo clicked 가상자료가 등록되었습니다. 내검 실행을 누르세요.
+PASS: local HTTP loading, demo registration, inspection, evidence, memo, Excel download, glossary search, clear, five generated XLSX inputs

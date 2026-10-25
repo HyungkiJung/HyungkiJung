@@ -1,0 +1,23 @@
+[
+  {
+    "volume": 1,
+    "filename": "2020년 기준 품목해설집 1권_주요사업체 제외.pdf",
+    "pdfPages": 339,
+    "embeddedPages": 295,
+    "sha256": "12dc936a7831e99e995941515de2d991ca4f1052f2a8329e44c205012d907447"
+  },
+  {
+    "volume": 2,
+    "filename": "2020년 기준 품목해설집 2권_주요사업체 제외.pdf",
+    "pdfPages": 419,
+    "embeddedPages": 377,
+    "sha256": "b7091128e0d9d198656224efbc10f401eda600a431c3c6206a7b6ab618636c6b"
+  },
+  {
+    "volume": 3,
+    "filename": "2020년 기준 품목해설집 3권_주요사업체 제외.pdf",
+    "pdfPages": 465,
+    "embeddedPages": 420,
+    "sha256": "0fdcc477ab6f5648aad301ff20329cac3a43218748b3e0cbd0c8f4d1b9b14f41"
+  }
+]

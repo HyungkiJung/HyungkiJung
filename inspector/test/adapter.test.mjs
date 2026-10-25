@@ -1,0 +1,14 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {parseWorkbook,validateReference,toCsv,memoKey} from '../src/adapter.mjs';
+import {runInspection} from '../src/engine.mjs';
+import {fixture} from './fixture.mjs';
+const fake=sheets=>({read:()=>({SheetNames:Object.keys(sheets),Sheets:sheets}),utils:{sheet_to_json:s=>s}});
+test('workbook parser selects matching sheet without filename assumptions',()=>{const X=fake({메모:[['안내']],자료:[['일련번호','보이스봇대상','입력여부'],['0001','Y','입력완료']]});const p=parseWorkbook(X,new Uint8Array(),'roster',{file:'renamed.xlsx'});assert.equal(p.selectedSheet,'자료');assert.equal(p.rows[0].entryState,'입력완료');assert.equal(p.rows[0].extraFields.보이스봇대상,'Y');});
+test('multiple sheets require selection, explicit sheet accepted',()=>{const a=[['일련번호'],['0001']],X=fake({가:a,나:a});assert.equal(parseWorkbook(X,[],'roster').diagnostics[0].code,'SHEET_SELECTION_REQUIRED');assert.equal(parseWorkbook(X,[],'roster',{sheet:'나'}).blocked,false);});
+test('no matching sheet produces actionable blocked input',()=>{const X=fake({안내:[['안내문']]});assert.equal(parseWorkbook(X,[],'roster').blocked,true);assert.equal(parseWorkbook(X,[],'roster').diagnostics[0].code,'NO_MATCHING_SHEET');});
+test('CSV quotes multiline text and guards formula-like cells',()=>{const csv=toCsv([['001', '=1+1',' +cmd','정상\n문장','a"b']]);assert(csv.startsWith('\uFEFF'));assert(csv.includes('"\'=1+1"'));assert(csv.includes('"\' +cmd"'));assert(csv.includes('"정상\n문장"'));assert(csv.includes('"a""b"'));});
+test('reference catalog requires explicit provenance and supported method',()=>{assert.throws(()=>validateReference({catalog:{X:{verificationState:'VERIFIED'}}}),/INVALID_CATALOG/);const r=validateReference({catalog:{X:{verificationState:'VERIFIED',expectedUnit:'톤',sourcePage:'가상기준',capacityMethod:'SURVEY',isRegional:false}},scope:{A:{forms:['orders']}}});assert.equal(r.scope.A.forms[0],'orders');});
+test('review memo keys distinguish item, metric and run',()=>{const r={runId:'1',ruleId:'R24',period:'202609',businessId:'A',itemId:'X',dimension:'quantity.exported'};assert.notEqual(memoKey(r),memoKey({...r,runId:'2'}));assert.notEqual(memoKey(r),memoKey({...r,itemId:'Y'}));assert.notEqual(memoKey(r),memoKey({...r,dimension:'amount.exported'}));});
+test('absent export-quantity column is NOT_RUN, not blank or normal',()=>{const f=fixture();f.datasets.dynamics.fields=['period','businessId','itemId','exported.amount'];const o=runInspection(f);assert.equal(o.results.find(r=>r.ruleId==='R24'&&r.dimension==='quantity.exported').status,'NOT_RUN');});
+test('unknown prior response state cannot be treated as passed',()=>{const f=fixture();f.datasets.dynamics.rows[1].responseState=null;const o=runInspection(f);assert.equal(o.results.find(r=>r.ruleId==='R21'&&r.dimension==='0->1').status,'UNCOMPUTABLE');});

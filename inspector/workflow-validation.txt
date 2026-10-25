@@ -1,0 +1,38 @@
+✔ inspection month auto-selected from dynamics1 without any user dates (1.790711ms)
+✔ older missing business does not shift global month (4.434163ms)
+✔ period override only when explicitly supplied (0.328941ms)
+✔ dataset card reports row count and actual two month range (0.270801ms)
+✔ scope metadata is not mandatory when observed current survey data exists (10.041894ms)
+✔ cutoff is optional and does not turn ordinary CASI state check off (2.847682ms)
+✔ 530 unique handbook items link to embedded source pages (1.01723ms)
+✔ handbook searches code, name, terms, volume and uploaded codes (66.016171ms)
+✔ visually corrected special header names match the source (0.388587ms)
+✖ all bundled source page assets exist and match their image formats (1.00607ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 9
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 189.157418
+
+✖ failing tests:
+
+test at test/workflow.test.mjs:18:1
+✖ all bundled source page assets exist and match their image formats (1.00607ms)
+  Error: ENOENT: no such file or directory, open '/workspace/HyungkiJung/handbook-pages/1-23.webp'
+      at Object.openSync (node:fs:622:18)
+      at Object.readFileSync (node:fs:488:35)
+      at TestContext.<anonymous> (file:///workspace/HyungkiJung/inspector/test/workflow.test.mjs:18:184)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/workspace/HyungkiJung/handbook-pages/1-23.webp'
+  }
